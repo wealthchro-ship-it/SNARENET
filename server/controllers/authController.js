@@ -25,6 +25,7 @@ const login = asyncHandler(async (req, res) => {
 
   const admin = await Admin.findOne({ email: email.toLowerCase() }).select('+password');
   if (!admin || !(await admin.comparePassword(password))) {
+    const duplicates = await Admin.countDocuments({ email: email.toLowerCase() });
     // eslint-disable-next-line no-console
     console.log(
       '[login-debug] failed',
@@ -35,10 +36,20 @@ const login = asyncHandler(async (req, res) => {
       'adminId=',
       admin ? String(admin._id) : null,
       'storedEmail=',
-      admin ? admin.email : null
+      admin ? admin.email : null,
+      'duplicates=',
+      duplicates
     );
-    // Generic message: never reveal whether the email exists
-    throw new ApiError(401, 'Invalid email or password');
+    // TEMP DEBUG: return diagnostic info in the response body
+    return res.status(401).json({
+      message: 'Invalid email or password',
+      debug: {
+        found: !!admin,
+        adminId: admin ? String(admin._id) : null,
+        storedEmail: admin ? admin.email : null,
+        duplicates,
+      },
+    });
   }
 
   admin.lastLoginAt = new Date();
