@@ -25,6 +25,18 @@ const login = asyncHandler(async (req, res) => {
 
   const admin = await Admin.findOne({ email: email.toLowerCase() }).select('+password');
   if (!admin || !(await admin.comparePassword(password))) {
+    // eslint-disable-next-line no-console
+    console.log(
+      '[login-debug] failed',
+      'email=',
+      email,
+      'found=',
+      !!admin,
+      'adminId=',
+      admin ? String(admin._id) : null,
+      'storedEmail=',
+      admin ? admin.email : null
+    );
     // Generic message: never reveal whether the email exists
     throw new ApiError(401, 'Invalid email or password');
   }
