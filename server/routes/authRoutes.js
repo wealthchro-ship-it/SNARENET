@@ -9,7 +9,7 @@ const router = express.Router();
 router.post(
   '/login',
   loginLimiter,
-  body('email').isEmail().normalizeEmail(),
+  body('email').isEmail(),
   body('password').isString().isLength({ min: 8, max: 100 }),
   login
 );
