@@ -10,7 +10,7 @@ function signToken(adminId) {
 
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  sameSite: 'lax',
+  sameSite: config.isProduction ? 'none' : 'lax',
   secure: config.isProduction,
   maxAge: 8 * 60 * 60 * 1000,
 };
@@ -41,7 +41,7 @@ const login = asyncHandler(async (req, res) => {
 const logout = (req, res) => {
   res.clearCookie(config.jwtCookieName, {
     httpOnly: true,
-    sameSite: 'lax',
+    sameSite: config.isProduction ? 'none' : 'lax',
     secure: config.isProduction,
   });
   return res.json({ message: 'Logged out' });
