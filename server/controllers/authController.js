@@ -26,6 +26,14 @@ const login = asyncHandler(async (req, res) => {
   const admin = await Admin.findOne({ email: email.toLowerCase() }).select('+password');
   if (!admin || !(await admin.comparePassword(password))) {
     const all = await Admin.find().select('email').lean();
+    const queried = email.toLowerCase();
+    const ascii = queried.split('').map((c) => c.codePointAt(0).toString(16)).join(' ');
+    const strictEquals = all.some((a) => a.email === queried);
+    const fuzzy = await Admin.findOne({
+      email: { $regex: '^' + queried.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '$', $options: 'i' },
+    })
+      .select('email')
+      .lean();
     // eslint-disable-next-line no-console
     console.log(
       '[login-debug] failed',
@@ -33,6 +41,12 @@ const login = asyncHandler(async (req, res) => {
       email,
       'found=',
       !!admin,
+      'strictEquals=',
+      strictEquals,
+      'fuzzy=',
+      fuzzy ? fuzzy.email : null,
+      'queriedHex=',
+      ascii,
       'all=',
       all.map((a) => a.email)
     );
@@ -41,7 +55,9 @@ const login = asyncHandler(async (req, res) => {
       message: 'Invalid email or password',
       debug: {
         found: !!admin,
-        adminId: admin ? String(admin._id) : null,
+        strictEquals,
+        fuzzyMatch: fuzzy ? fuzzy.email : null,
+        queriedHex: ascii,
         allAdmins: all.map((a) => a.email),
       },
     });
