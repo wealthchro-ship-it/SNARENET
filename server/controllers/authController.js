@@ -25,7 +25,7 @@ const login = asyncHandler(async (req, res) => {
 
   const admin = await Admin.findOne({ email: email.toLowerCase() }).select('+password');
   if (!admin || !(await admin.comparePassword(password))) {
-    const duplicates = await Admin.countDocuments({ email: email.toLowerCase() });
+    const all = await Admin.find().select('email').lean();
     // eslint-disable-next-line no-console
     console.log(
       '[login-debug] failed',
@@ -33,12 +33,8 @@ const login = asyncHandler(async (req, res) => {
       email,
       'found=',
       !!admin,
-      'adminId=',
-      admin ? String(admin._id) : null,
-      'storedEmail=',
-      admin ? admin.email : null,
-      'duplicates=',
-      duplicates
+      'all=',
+      all.map((a) => a.email)
     );
     // TEMP DEBUG: return diagnostic info in the response body
     return res.status(401).json({
@@ -46,8 +42,7 @@ const login = asyncHandler(async (req, res) => {
       debug: {
         found: !!admin,
         adminId: admin ? String(admin._id) : null,
-        storedEmail: admin ? admin.email : null,
-        duplicates,
+        allAdmins: all.map((a) => a.email),
       },
     });
   }
